@@ -2010,6 +2010,29 @@ tr:last-child td {
   width: 170px;
   height: auto;
 }
+.brand-preview > img {
+  width: min(100%, 360px);
+  height: auto;
+}
+.brand-preview > .brand-logo-stacked {
+  width: min(100%, 200px);
+}
+.brand-asset-label {
+  font: 9px var(--mono);
+  letter-spacing: 0.12em;
+  opacity: 0.8;
+}
+.brand-icon-downloads {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.brand-icon-downloads a {
+  color: var(--gold);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 .brand-preview a {
   display: inline-flex;
   align-items: center;

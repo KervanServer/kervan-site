@@ -1,6 +1,6 @@
 import { ArrowDownToLine } from "lucide-react";
 import type { Metadata } from "next";
-import { Logo } from "@/components/logo";
+import Image from "next/image";
 export const metadata: Metadata = {
   title: "Brand assets",
   description:
@@ -19,20 +19,34 @@ export default function BrandPage() {
         identity, wherever Kervan goes.
       </p>
       <div className="brand-previews">
-        <div className="brand-preview dark-brand">
-          <Logo />
-          <a href="/brand/kervan-dark.svg" download>
-            <ArrowDownToLine size={16} />
-            Download SVG · dark background
-          </a>
-        </div>
-        <div className="brand-preview light-brand">
-          <Logo />
-          <a href="/brand/kervan-light.svg" download>
-            <ArrowDownToLine size={16} />
-            Download SVG · light background
-          </a>
-        </div>
+        {(["horizontal", "stacked"] as const).flatMap((layout) =>
+          (["dark", "light"] as const).map((theme) => {
+            const path = `/brand/kervan-${layout === "horizontal" ? "horizontal-" : ""}${theme}.svg`;
+            return (
+              <div
+                className={`brand-preview ${theme}-brand`}
+                key={`${layout}-${theme}`}
+              >
+                <span className="brand-asset-label">
+                  {layout === "horizontal"
+                    ? "HORIZONTAL LOCKUP"
+                    : "ORIGINAL STACKED LOCKUP"}
+                </span>
+                <Image
+                  className={`brand-logo-${layout}`}
+                  src={path}
+                  width={layout === "horizontal" ? 800 : 280}
+                  height={layout === "horizontal" ? 128 : 188}
+                  alt={`Kervan ${layout} logo for ${theme} backgrounds`}
+                />
+                <a href={path} download>
+                  <ArrowDownToLine size={16} />
+                  Download {layout} SVG · {theme} background
+                </a>
+              </div>
+            );
+          }),
+        )}
       </div>
       <div className="brand-colors">
         <div>
@@ -54,20 +68,47 @@ export default function BrandPage() {
       <h2>Keep the connection intact.</h2>
       <p>
         Preserve the artwork’s geometry, proportions, lettering and clear space.
-        These SVG silhouettes are traced from the supplied raster logo; colors
-        are sampled and normalized from that reference. The original artwork is
+        These SVG curves are fitted to the supplied raster logo; colors are
+        sampled and normalized from that reference. The original artwork is
         available for comparison.
       </p>
       <div className="hero-actions">
-        <a className="button secondary" href="/brand/kervan-mark.svg" download>
-          <ArrowDownToLine size={16} />
-          Download mark
-        </a>
+        {(["mark", "wordmark"] as const).flatMap((asset) =>
+          (["dark", "light"] as const).map((theme) => (
+            <a
+              className="button secondary"
+              href={`/brand/kervan-${asset}-${theme}.svg`}
+              download
+              key={`${asset}-${theme}`}
+            >
+              <ArrowDownToLine size={16} />
+              {asset === "mark" ? "Mark" : "Wordmark"} · {theme} background
+            </a>
+          )),
+        )}
         <a className="text-link" href="/brand/kervan-original.png" download>
           Original artwork
           <ArrowDownToLine size={16} />
         </a>
       </div>
+      <p className="brand-icon-downloads">
+        Browser & mobile icons:{" "}
+        <a href="/icon.svg" download>
+          SVG
+        </a>
+        <a href="/favicon.ico" download>
+          ICO
+        </a>
+        <a href="/apple-touch-icon.png" download>
+          Apple 180px
+        </a>
+        <a href="/icon-192.png" download>
+          PNG 192px
+        </a>
+        <a href="/icon-512.png" download>
+          PNG 512px
+        </a>
+      </p>
     </main>
   );
 }

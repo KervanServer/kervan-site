@@ -18,7 +18,7 @@
     "check": "biome check src scripts tests next.config.ts playwright.config.ts tsconfig.json biome.json package.json",
     "format": "biome check --write src scripts tests next.config.ts playwright.config.ts tsconfig.json biome.json package.json",
     "test": "playwright test",
-    "brand": "node scripts/brand.mjs"
+    "brand": "node scripts/brand.mjs && biome format --write src/components/brand-paths.ts"
   },
   "dependencies": {
     "@fontsource-variable/manrope": "5.3.0",
@@ -31,6 +31,7 @@
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
     "@biomejs/biome": "2.5.15",
+    "@neplex/vectorizer": "0.1.0",
     "@playwright/test": "1.64.1",
     "@types/node": "26.6.5",
     "@types/react": "19.3.0",
