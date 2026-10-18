@@ -2,6 +2,57 @@
   position: relative;
   flex-shrink: 0;
 }
+.header-preferences {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+.animation-control {
+  display: inline-flex;
+  position: relative;
+}
+.animation-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--gold-soft);
+  border-radius: 0.625rem;
+  color: var(--gold);
+  background: var(--surface);
+}
+.animation-toggle[aria-pressed="false"] {
+  color: var(--muted);
+  border-color: var(--line);
+}
+.animation-toggle[aria-pressed="false"] svg {
+  opacity: 0.5;
+}
+.animation-toggle:hover {
+  border-color: var(--gold);
+  background: var(--surface-soft);
+}
+.animation-tooltip {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.75rem);
+  z-index: 5;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  pointer-events: none;
+  visibility: hidden;
+}
+.animation-control:is(:hover, :focus-within) .animation-tooltip {
+  visibility: visible;
+}
 .theme-trigger {
   display: flex;
   align-items: center;

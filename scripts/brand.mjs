@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import { ColorMode, PathSimplifyMode, vectorize } from "@neplex/vectorizer";
 import sharp from "sharp";
+import { generateSocialImage } from "./social.mjs";
 
 // Mask and fit the actual supplied lettering/mark. Never substitute a font.
 const source = "public/brand/kervan-original.png";
@@ -286,13 +287,7 @@ await fs.writeFile(
     2,
   )}\n`,
 );
-const social = svg(
-  `<rect width="1200" height="630" fill="${colors.navy}"/><path d="M0 520H1200M810 0V630" stroke="${colors.gold}" opacity=".16"/><g transform="translate(880 240) scale(.9)">${mark(colors.cream)}</g><g transform="translate(72 64) scale(.48)">${wordmark(colors.cream)}</g><text x="72" y="232" fill="${colors.cream}" font-family="sans-serif" font-size="75" font-weight="700">One binary.</text><text x="72" y="320" fill="${colors.gold}" font-family="sans-serif" font-size="75" font-weight="700">Every protocol.</text><text x="72" y="408" fill="${colors.cream}" font-family="sans-serif" font-size="75" font-weight="700">Total control.</text><text x="72" y="562" fill="${colors.gold}" font-family="monospace" font-size="21">FTP · FTPS · SFTP · SCP</text><text x="880" y="562" fill="${colors.cream}" font-family="monospace" font-size="19">kervanserver.com</text>`,
-  "0 0 1200 630",
-  "Kervan — One binary. Every protocol. Total control.",
-);
-await fs.writeFile("public/brand/social.svg", social);
-await sharp(Buffer.from(social)).png().toFile("public/og.png");
+await generateSocialImage();
 console.log(
   "Generated curved vector logos, horizontal/stacked/mark/wordmark variants, browser/mobile icons, manifest and social image.",
 );

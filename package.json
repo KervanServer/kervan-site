@@ -18,6 +18,7 @@
     "check": "biome check src scripts tests next.config.ts playwright.config.ts tsconfig.json biome.json package.json",
     "format": "biome check --write src scripts tests next.config.ts playwright.config.ts tsconfig.json biome.json package.json",
     "test": "playwright test",
+    "social": "node scripts/social.mjs",
     "brand": "node scripts/brand.mjs && biome format --write src/components/brand-paths.ts"
   },
   "dependencies": {

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { REPO } from "@/lib/site";
+import { AnimationToggle } from "./animation-toggle";
 import { Github } from "./github-icon";
 import { Logo } from "./logo";
 import { ThemePicker } from "./theme-picker";
@@ -74,7 +75,10 @@ export function Navigation() {
           ))}
         </nav>
         <div className="header-actions">
-          <ThemePicker />
+          <div className="header-preferences">
+            <ThemePicker />
+            <AnimationToggle />
+          </div>
           <a className="github-link" href={REPO}>
             <Github />
             <span>GitHub</span>

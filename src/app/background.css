@@ -1,13 +1,16 @@
 :root {
-  --field-color: light-dark(rgb(146 106 29 / 0.4), rgb(223 184 95 / 0.38));
+  --field-color: light-dark(rgb(146 106 29 / 0.48), rgb(223 184 95 / 0.46));
   --field-wire: light-dark(rgb(153 123 61 / 0.24), rgb(187 158 102 / 0.21));
   --field-pulse: light-dark(rgb(139 99 20 / 0.62), rgb(223 184 95 / 0.66));
   --field-ink: rgb(20 21 34 / 0.38);
+  --field-glow: light-dark(#a17420, #dfb85f);
+  --field-response: light-dark(rgb(132 91 16 / 0.58), rgb(233 194 112 / 0.7));
 }
 .site-background {
   position: fixed;
   inset: 0;
-  z-index: 10;
+  /* Body-level layer clears content and the sticky header (50), below skip link (100). */
+  z-index: 60;
   pointer-events: none;
   overflow: hidden;
   opacity: 0;
@@ -17,27 +20,15 @@
 .site-background[data-ready="true"] {
   opacity: 1;
 }
+.site-background[data-enabled="false"],
+:root[data-background-animations="off"] .site-background {
+  display: none;
+}
 .site-background > svg {
   display: block;
   width: 100%;
   height: 100%;
   overflow: hidden;
-  mask-image:
-    linear-gradient(
-      to right,
-      transparent,
-      #000 40px,
-      #000 calc(100% - 40px),
-      transparent
-    ),
-    linear-gradient(
-      to bottom,
-      transparent,
-      #000 48px,
-      #000 calc(100% - 48px),
-      transparent
-    );
-  mask-composite: intersect;
 }
 .site-background :is(path, circle, rect, line) {
   vector-effect: non-scaling-stroke;
@@ -58,11 +49,40 @@
   fill: currentColor;
   stroke: none;
 }
-.field-wave {
+.field-wave,
+.field-echo {
   color: var(--field-pulse);
   fill: none;
   stroke: currentColor;
-  stroke-width: 1;
+  stroke-width: 1.6;
+}
+.field-echo {
+  color: var(--field-response);
+  stroke-width: 0.85;
+}
+.field-echo .field-wave-core {
+  display: none;
+}
+.field-response {
+  /* This layer intentionally has no content or section masks. */
+  opacity: 0.9;
+}
+.field-mote,
+.field-trail,
+.field-cursor-orbit {
+  color: var(--field-response);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.1;
+}
+.field-trail {
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.field-cursor-orbit {
+  stroke-dasharray: 15 25 4 18;
+  opacity: 0.45;
 }
 .field-wave-ring > circle,
 .field-wave-ring > use,
@@ -72,6 +92,10 @@
 .field-wave-hex {
   display: none;
   transform: scale(0.08333333);
+}
+.field-wave-hex,
+.field-wave-core {
+  stroke-width: 0.85;
 }
 .field-wave[data-variant="1"] .field-wave-circle {
   display: none;

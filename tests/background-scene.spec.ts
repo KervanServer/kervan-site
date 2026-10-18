@@ -12,6 +12,94 @@ import {
   waveRadius,
 } from "../src/lib/background-scene";
 
+test("orbiting shapes carry smooth inertia and behave consistently at 60 and 120 Hz", () => {
+  const a = createBackground(1440, 900);
+  const b = createBackground(1440, 900);
+  for (const scene of [a, b]) movePointer(scene, { x: 600, y: 400 });
+  for (let i = 0; i < 60; i++) stepBackground(a, 1 / 60);
+  for (let i = 0; i < 120; i++) stepBackground(b, 1 / 120);
+  const first = {
+    x: a.motes[0].x - a.pointer.x,
+    y: a.motes[0].y - a.pointer.y,
+  };
+  for (let i = 0; i < 60; i++) stepBackground(a, 1 / 60);
+  for (let i = 0; i < 120; i++) stepBackground(b, 1 / 120);
+  const last = { x: a.motes[0].x - a.pointer.x, y: a.motes[0].y - a.pointer.y };
+  expect(first.x * last.y - first.y * last.x).toBeGreaterThan(100);
+  expect(
+    Math.hypot(a.motes[0].x - b.motes[0].x, a.motes[0].y - b.motes[0].y),
+  ).toBeLessThan(1);
+  const before = { ...a.motes[0] };
+  movePointer(a, { x: 900, y: 600 });
+  stepBackground(a, 1 / 60);
+  expect(
+    Math.hypot(a.motes[0].x - before.x, a.motes[0].y - before.y),
+  ).toBeLessThan(5);
+  expect(Math.hypot(a.motes[0].vx, a.motes[0].vy)).toBeGreaterThan(1);
+});
+
+test("leaving the viewport discards a shape's transient impulse without recycling its identity", () => {
+  const scene = createBackground(1440, 900);
+  const cell = scene.cells.find((entry) => {
+    const point = cellPoint(scene, entry);
+    return point.y > 0 && point.y < entry.height;
+  });
+  if (!cell) throw new Error("Visible shape missing");
+  const point = cellPoint(scene, cell);
+  const row = cell.value?.row;
+  Object.assign(cell.flow, { active: true, energy: 1, spin: 1, vx: 100 });
+  scene.scroll = (point.y + 30) / cell.depth;
+  stepBackground(scene, 1 / 60);
+  expect(cell.value?.row).toBe(row);
+  expect(cell.flow.energy).toBe(0);
+  expect(cell.flow.vx).toBe(0);
+});
+
+test("clicks relay through nearby shapes in successive hops with finite budgets and full decay", () => {
+  const scene = createBackground(1440, 900);
+  movePointer(scene, { x: 600, y: 400 });
+  for (let i = 0; i < 60; i++) stepBackground(scene, 1 / 60);
+  emitWave(scene, { x: 600, y: 400 });
+  const root = scene.waves[0];
+  const arrivals = new Set<number>();
+  let maxHop = 0;
+  for (let i = 0; i < 360; i++) {
+    const before = root.chain.hits.size;
+    stepBackground(scene, 1 / 60);
+    if (root.chain.hits.size > before) arrivals.add(i);
+    for (const echo of scene.echoes) {
+      maxHop = Math.max(maxHop, echo.hop);
+      expect(echo.chain).toBe(root.chain);
+      expect(echo.power).toBeLessThanOrEqual(0.42);
+    }
+    expect(scene.echoes.length).toBeLessThanOrEqual(BACKGROUND.maxEchoes);
+    expect(root.chain.hits.size).toBeLessThanOrEqual(BACKGROUND.chainHits);
+    expect(displace(scene, { x: 1400, y: 850 })).toEqual({ x: 1400, y: 850 });
+  }
+  expect(arrivals.size).toBeGreaterThan(2);
+  expect(maxHop).toBe(2);
+  expect(scene.echoes).toHaveLength(0);
+  expect(scene.waves).toHaveLength(0);
+  expect(scene.motes.every((flow) => flow.energy < 0.01)).toBe(true);
+});
+
+test("nearby geometry repels at the cursor and pulls strongly further out, with no distant force", () => {
+  const scene = createBackground(1440, 900);
+  movePointer(scene, { x: 600, y: 400 });
+  for (let i = 0; i < 60; i++) stepBackground(scene, 1 / 60);
+  expect(displace(scene, { x: 620, y: 400 }).x).toBeGreaterThan(620);
+  expect(displace(scene, { x: 700, y: 400 }).x).toBeLessThan(680);
+  expect(displace(scene, { x: 1100, y: 700 })).toEqual({ x: 1100, y: 700 });
+});
+
+test("cursor trails stay bounded and disappear after motion stops", () => {
+  const scene = createBackground(1440, 900);
+  for (let i = 0; i < 200; i++) movePointer(scene, { x: i * 6, y: 300 });
+  expect(scene.trail.length).toBe(BACKGROUND.maxTrail);
+  for (let i = 0; i < 60; i++) stepBackground(scene, 1 / 60);
+  expect(scene.trail).toHaveLength(0);
+});
+
 test("mobile and 4K fields keep bounded density and cover both sides of the viewport", () => {
   const mobile = createBackground(375, 812);
   expect(mobile.cells.length).toBeLessThanOrEqual(BACKGROUND.mobileMaxCells);

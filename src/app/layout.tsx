@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { Footer } from "@/components/footer";
 import { Navigation } from "@/components/navigation";
 import { SiteBackground } from "@/components/site-background";
+import { ANIMATION_INIT } from "@/lib/animation-settings";
 import { SITE } from "@/lib/site";
 import "./globals.css";
 import "./reference.css";
@@ -64,6 +65,7 @@ export default function RootLayout({
     >
       <head>
         <script>{`try{var t=localStorage.getItem('kervan-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch{}`}</script>
+        <script>{ANIMATION_INIT}</script>
       </head>
       <body>
         <SiteBackground />
