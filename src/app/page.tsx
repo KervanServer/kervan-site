@@ -24,6 +24,7 @@ import { Architecture } from "@/components/architecture";
 import { CopyButton } from "@/components/copy-button";
 import { Github } from "@/components/github-icon";
 import { HeroArt } from "@/components/hero-art";
+import { HeroBackdrop } from "@/components/hero-backdrop";
 import { Mark } from "@/components/logo";
 import { ProtocolExplorer } from "@/components/protocol-explorer";
 import { Quickstart } from "@/components/quickstart";
@@ -189,65 +190,71 @@ export default function Home() {
       <script type="application/ld+json">
         {JSON.stringify(structuredData)}
       </script>
-      <section className="hero container" aria-labelledby="hero-title">
-        <div className="hero-copy">
-          <a className="release-pill" href={`${REPO}/releases/tag/${VERSION}`}>
-            <span className="live-dot" />
-            <span>{VERSION}</span>
-            <span className="pill-divider" />
-            One less thing to manage.
-            <ArrowRight size={14} />
-          </a>
-          <h1 id="hero-title">
-            One binary.
-            <br />
-            <span>Every protocol.</span>
-            <br />
-            Total control<span className="gold-period">.</span>
-          </h1>
-          <p className="hero-lead">File transfers, on your terms.</p>
-          <p className="hero-description">
-            FTP, FTPS, SFTP and SCP. One shared filesystem, one auth engine, one
-            audit trail. Everything you need to move files. All in a single Go
-            binary.
-          </p>
-          <div className="hero-actions">
-            <Link href="/docs/getting-started/" className="button primary">
-              Start transferring
-              <ArrowRight size={18} />
-            </Link>
-            <a href={REPO} className="button secondary">
-              <Github />
-              Explore the source
-              <ArrowUpRight size={14} />
+      <section className="hero-stage" aria-labelledby="hero-title">
+        <HeroBackdrop />
+        <div className="hero container">
+          <div className="hero-copy">
+            <a
+              className="release-pill"
+              href={`${REPO}/releases/tag/${VERSION}`}
+            >
+              <span className="live-dot" />
+              <span>{VERSION}</span>
+              <span className="pill-divider" />
+              One less thing to manage.
+              <ArrowRight size={14} />
             </a>
+            <h1 id="hero-title">
+              One binary.
+              <br />
+              <span>Every protocol.</span>
+              <br />
+              Total control<span className="gold-period">.</span>
+            </h1>
+            <p className="hero-lead">File transfers, on your terms.</p>
+            <p className="hero-description">
+              FTP, FTPS, SFTP and SCP. One shared filesystem, one auth engine,
+              one audit trail. Everything you need to move files. All in a
+              single Go binary.
+            </p>
+            <div className="hero-actions">
+              <Link href="/docs/getting-started/" className="button primary">
+                Start transferring
+                <ArrowRight size={18} />
+              </Link>
+              <a href={REPO} className="button secondary">
+                <Github />
+                Explore the source
+                <ArrowUpRight size={14} />
+              </a>
+            </div>
+            <div className="hero-command">
+              <Terminal size={17} />
+              <code>
+                <span>$</span> ./kervan
+              </code>
+              <CopyButton text="./kervan" label="Copy start command" />
+            </div>
+            <div className="hero-trust">
+              <span>
+                <Check />
+                Pure Go. Zero CGO.
+              </span>
+              <span>
+                <Check />
+                MIT licensed
+              </span>
+              <span>
+                <Check />
+                Yours to run
+              </span>
+            </div>
           </div>
-          <div className="hero-command">
-            <Terminal size={17} />
-            <code>
-              <span>$</span> ./kervan
-            </code>
-            <CopyButton text="./kervan" label="Copy start command" />
-          </div>
-          <div className="hero-trust">
-            <span>
-              <Check />
-              Pure Go. Zero CGO.
-            </span>
-            <span>
-              <Check />
-              MIT licensed
-            </span>
-            <span>
-              <Check />
-              Yours to run
-            </span>
-          </div>
+          <HeroArt />
+          <a className="hero-scroll" href="#features">
+            <ArrowDown size={14} /> LESS INFRASTRUCTURE. MORE FORWARD.
+          </a>
         </div>
-        <HeroArt />
-        <a className="hero-scroll" href="#features">
-          <ArrowDown size={14} /> LESS INFRASTRUCTURE. MORE FORWARD.
-        </a>
       </section>
       <div className="capability-strip">
         <div className="container capability-inner">
