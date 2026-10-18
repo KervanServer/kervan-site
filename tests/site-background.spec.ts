@@ -22,6 +22,11 @@ async function ready(page: Page) {
   // cannot be advanced reliably by a clock installed after hydration.
   await page.clock.install();
   await page.goto("/");
+  // Native compositor scroll animations use a different clock from JS timers.
+  // These tests measure scene lifetimes and masks, so settle navigation instantly.
+  await page.addStyleTag({
+    content: "html { scroll-behavior: auto !important; }",
+  });
   await expect(page.locator(".site-background")).toHaveAttribute(
     "data-motion",
     "running",
@@ -38,41 +43,45 @@ async function blankClick(page: Page) {
   await page.clock.runFor(250);
 }
 async function expectMasked(page: Page, selector: string) {
-  const result = await page
-    .locator(selector)
-    .first()
-    .evaluate((element) => {
-      const box = element.getBoundingClientRect();
-      const point = {
-        x: box.left + box.width / 2,
-        y: box.top + Math.min(20, box.height / 2),
-      };
-      const covered = Array.from(
-        document.querySelectorAll(".site-background mask g rect"),
-      ).some(
-        (rect) =>
-          rect.getAttribute("display") !== "none" &&
-          rect.getAttribute("opacity") !== "0.55" &&
-          point.x >= Number(rect.getAttribute("x")) &&
-          point.y >= Number(rect.getAttribute("y")) &&
-          point.x <=
-            Number(rect.getAttribute("x")) +
-              Number(rect.getAttribute("width")) &&
-          point.y <=
-            Number(rect.getAttribute("y")) +
-              Number(rect.getAttribute("height")),
-      );
-      return {
-        covered,
-        y: box.y,
-        height: box.height,
-        scroll: window.scrollY,
-        motion: document
-          .querySelector(".site-background")
-          ?.getAttribute("data-motion"),
-      };
-    });
-  expect(result.covered, JSON.stringify({ selector, ...result })).toBe(true);
+  await expect
+    .poll(async () => {
+      const result = await page
+        .locator(selector)
+        .first()
+        .evaluate((element) => {
+          const box = element.getBoundingClientRect();
+          const point = {
+            x: box.left + box.width / 2,
+            y: box.top + Math.min(20, box.height / 2),
+          };
+          const covered = Array.from(
+            document.querySelectorAll(".site-background mask g rect"),
+          ).some(
+            (rect) =>
+              rect.getAttribute("display") !== "none" &&
+              rect.getAttribute("opacity") !== "0.55" &&
+              point.x >= Number(rect.getAttribute("x")) &&
+              point.y >= Number(rect.getAttribute("y")) &&
+              point.x <=
+                Number(rect.getAttribute("x")) +
+                  Number(rect.getAttribute("width")) &&
+              point.y <=
+                Number(rect.getAttribute("y")) +
+                  Number(rect.getAttribute("height")),
+          );
+          return {
+            covered,
+            y: box.y,
+            height: box.height,
+            scroll: window.scrollY,
+            motion: document
+              .querySelector(".site-background")
+              ?.getAttribute("data-motion"),
+          };
+        });
+      return result.covered || { selector, ...result };
+    })
+    .toBe(true);
 }
 
 test("one SVG spans the full site, moves through sections, protects content, and follows client navigation", async ({
@@ -125,6 +134,8 @@ test("one SVG spans the full site, moves through sections, protects content, and
   await expectMasked(page, ".docs-article h1");
   await page.getByRole("link", { name: "Brand assets", exact: true }).click();
   await expect(page).toHaveURL(/\/brand\/$/);
+  await page.locator(".brand-preview").first().scrollIntoViewIfNeeded();
+  await expect(page.locator(".brand-preview").first()).toBeInViewport();
   await page.clock.runFor(400);
   await expectMasked(page, ".brand-preview");
   await expect(root.locator(".field-cell")).not.toHaveCount(0);
@@ -182,13 +193,39 @@ test("waves are finite and bounded across the page; links, buttons and text sele
   await cta.focus();
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(/\/docs\/getting-started\/$/);
+  await expect(page.locator(".docs-article h1")).toBeInViewport();
   await page.clock.runFor(250);
   await expect(activeWaves(page)).toHaveCount(0);
-  await page.evaluate(() => window.scrollTo({ top: 800, behavior: "instant" }));
+  // Scroll events are delivered by the native renderer, outside the JS clock.
+  // Wait for that event before starting a separate user tap.
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        if (window.scrollY === 800) {
+          resolve();
+          return;
+        }
+        window.addEventListener("scroll", () => resolve(), { once: true });
+        window.scrollTo({ top: 800, behavior: "instant" });
+      }),
+  );
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(800);
   await page.clock.runFor(100);
   await blankClick(page);
-  expect(await activeWaves(page).count()).toBeGreaterThan(0);
+  expect(
+    await activeWaves(page).count(),
+    JSON.stringify(
+      await page.evaluate(() => ({
+        scroll: window.scrollY,
+        target: document.elementFromPoint(1260, 180)?.outerHTML.slice(0, 300),
+        selection: window.getSelection()?.isCollapsed,
+        selectionText: window.getSelection()?.toString(),
+        motion: document
+          .querySelector(".site-background")
+          ?.getAttribute("data-motion"),
+      })),
+    ),
+  ).toBeGreaterThan(0);
 });
 
 test("culled cells stay still, hidden scenes stop, and resume discards transient effects", async ({
