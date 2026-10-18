@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Footer } from "@/components/footer";
 import { Navigation } from "@/components/navigation";
+import { SiteBackground } from "@/components/site-background";
 import { SITE } from "@/lib/site";
 import "./globals.css";
 import "./reference.css";
+import "./background.css";
 
 const manrope = localFont({
   src: "../../node_modules/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2",
@@ -64,6 +66,7 @@ export default function RootLayout({
         <script>{`try{var t=localStorage.getItem('kervan-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch{}`}</script>
       </head>
       <body>
+        <SiteBackground />
         <a className="skip-link" href="#main">
           Skip to content
         </a>

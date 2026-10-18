@@ -1,0 +1,99 @@
+:root {
+  --field-color: light-dark(rgb(146 106 29 / 0.4), rgb(223 184 95 / 0.38));
+  --field-wire: light-dark(rgb(153 123 61 / 0.24), rgb(187 158 102 / 0.21));
+  --field-pulse: light-dark(rgb(139 99 20 / 0.62), rgb(223 184 95 / 0.66));
+  --field-ink: rgb(20 21 34 / 0.38);
+}
+.site-background {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  contain: strict;
+}
+.site-background[data-ready="true"] {
+  opacity: 1;
+}
+.site-background > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  mask-image:
+    linear-gradient(
+      to right,
+      transparent,
+      #000 40px,
+      #000 calc(100% - 40px),
+      transparent
+    ),
+    linear-gradient(
+      to bottom,
+      transparent,
+      #000 48px,
+      #000 calc(100% - 48px),
+      transparent
+    );
+  mask-composite: intersect;
+}
+.site-background :is(path, circle, rect, line) {
+  vector-effect: non-scaling-stroke;
+}
+.field-cell,
+.field-connection {
+  color: var(--field-color);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 0.85;
+}
+.field-route {
+  stroke: var(--field-wire);
+  stroke-width: 0.7;
+}
+.field-packet,
+.field-spark {
+  fill: currentColor;
+  stroke: none;
+}
+.field-wave {
+  color: var(--field-pulse);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
+}
+.field-wave-ring > circle,
+.field-wave-ring > use,
+.field-wave-core {
+  vector-effect: non-scaling-stroke;
+}
+.field-wave-hex {
+  display: none;
+  transform: scale(0.08333333);
+}
+.field-wave[data-variant="1"] .field-wave-circle {
+  display: none;
+}
+.field-wave[data-variant="1"] .field-wave-hex {
+  display: inline;
+}
+.field-wave[data-variant="2"] .field-wave-circle {
+  stroke-dasharray: 38 15;
+}
+.field-wave-core {
+  opacity: 0.35;
+}
+.site-background [data-tone="ink"] {
+  color: var(--field-ink);
+}
+.site-background [data-tone="ink"] .field-route {
+  stroke: var(--field-ink);
+  opacity: 0.4;
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-background {
+    transition: none;
+  }
+}

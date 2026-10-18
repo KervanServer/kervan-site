@@ -24,7 +24,6 @@ import { Architecture } from "@/components/architecture";
 import { CopyButton } from "@/components/copy-button";
 import { Github } from "@/components/github-icon";
 import { HeroArt } from "@/components/hero-art";
-import { HeroBackdrop } from "@/components/hero-backdrop";
 import { Mark } from "@/components/logo";
 import { ProtocolExplorer } from "@/components/protocol-explorer";
 import { Quickstart } from "@/components/quickstart";
@@ -191,7 +190,6 @@ export default function Home() {
         {JSON.stringify(structuredData)}
       </script>
       <section className="hero-stage" aria-labelledby="hero-title">
-        <HeroBackdrop />
         <div className="hero container">
           <div className="hero-copy">
             <a
