@@ -1,7 +1,6 @@
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
-import { REPO, SITE_REPO, SOURCE } from "@/lib/site";
-import { Github } from "./github-icon";
+import { REPO, SOURCE, VERSION } from "@/lib/site";
 import { Logo } from "./logo";
 import { Studio } from "./studio";
 export function Footer() {
@@ -54,14 +53,10 @@ export function Footer() {
       </div>
       <Studio />
       <div className="container footer-bottom">
-        <span>© 2026 Kervan contributors · ECOSTACK TECHNOLOGY OÜ</span>
-        <a href={`${SOURCE}/LICENSE`}>MIT licensed</a>
-        <a href={REPO} aria-label="Kervan on GitHub">
-          <Github size={16} />
-        </a>
-        <a href={SITE_REPO}>
-          Website source
-          <ArrowUpRight size={12} />
+        <span>© 2026 Kervan contributors.</span>
+        <span>MIT · Made to be yours.</span>
+        <a href={`${REPO}/releases/tag/${VERSION}`}>
+          {VERSION} <ArrowUpRight size={12} />
         </a>
       </div>
     </footer>

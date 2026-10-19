@@ -264,20 +264,21 @@ test("reduced motion preserves the OXOG artwork and stops diagram animation", as
       .locator(".art-packets")
       .evaluate((el) => getComputedStyle(el).animationName),
   ).toBe("none");
-  await expect(
-    page.getByRole("link", { name: "Visit OXOGNET", exact: true }),
-  ).toHaveAttribute("href", "https://oxog.net/");
+  await expect(page.locator(".studio-card")).toHaveAttribute(
+    "href",
+    "https://oxog.net",
+  );
 });
 
-test("OXOG draws its original four paths when it enters the viewport", async ({
+test("OXOG loops its original four paths when it enters the viewport", async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/");
   const mark = page.locator(".studio-symbol");
-  await expect(mark).toHaveAttribute("data-motion", "waiting");
+  await expect(mark).toHaveAttribute("data-motion", "paused");
   await mark.scrollIntoViewIfNeeded();
-  await expect(mark).toHaveAttribute("data-motion", "drawing");
+  await expect(mark).toHaveAttribute("data-motion", "running");
   await expect(mark.locator("path")).toHaveCount(4);
   await expect(mark.locator("path").last()).toHaveCSS(
     "stroke-dashoffset",

@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
-import { useAnimationsEnabled } from "@/lib/animation-preference";
+import {
+  useAmbientMotionEnabled,
+  useAnimationsEnabled,
+} from "@/lib/animation-preference";
 import {
   BACKGROUND,
   type Box,
@@ -24,7 +27,7 @@ import {
 const NS = "http://www.w3.org/2000/svg";
 const controls =
   "a,button,input,select,textarea,summary,label,[role='button'],[role='tab'],[contenteditable],[data-background-quiet]";
-const quietContent = `${controls},h1,h2,h3,p,li,pre,table,aside,figcaption,.eyebrow,.hero-command,.hero-trust,.hero-art,.feature-featured,.feature-number,.protocol-explorer,.architecture-diagram,.management-preview,.use-cases article,.use-case-tag,.studio-card,.studio-signature,.brand-preview,.brand-colors,.code-block,.capability-inner,.built-go,.footer-bottom,.docs-meta,.docs-breadcrumb,.docs-category`;
+const quietContent = `${controls},h1,h2,h3,p,li,pre,table,aside,figcaption,.eyebrow,.hero-command,.hero-trust,.hero-art,.feature-featured,.feature-number,.protocol-explorer,.architecture-diagram,.management-preview,.use-cases article,.use-case-tag,.studio-card,.brand-preview,.brand-colors,.code-block,.capability-inner,.built-go,.footer-bottom,.docs-meta,.docs-breadcrumb,.docs-category`;
 // Hover always tracks across content. Only actual controls opt out of click bursts.
 const excludedInput = `${controls},header,nav`;
 const number = (value: number) => value.toFixed(2);
@@ -41,7 +44,10 @@ function makeSvg<K extends keyof SVGElementTagNameMap>(
 
 /** One viewport-sized SVG follows the document. Only visible cells are animated. */
 export function SiteBackground() {
-  const enabled = useAnimationsEnabled();
+  const interactive = useAnimationsEnabled();
+  const ambientEnabled = useAmbientMotionEnabled();
+  const enabled = ambientEnabled || interactive;
+  const configureInput = useRef<((enabled: boolean) => void) | null>(null);
   const id = `field-${useId().replace(/:/g, "")}`;
   const root = useRef<HTMLDivElement>(null);
   const svg = useRef<SVGSVGElement>(null);
@@ -589,19 +595,37 @@ export function SiteBackground() {
     document.addEventListener("visibilitychange", synchronize);
     window.addEventListener("resize", resize, { passive: true });
     window.addEventListener("scroll", scroll, { passive: true });
-    window.addEventListener("pointermove", move, {
-      passive: true,
-      capture: true,
-    });
-    window.addEventListener("pointerdown", down, {
-      passive: true,
-      capture: true,
-    });
-    window.addEventListener("pointerup", up, { passive: true, capture: true });
-    window.addEventListener("pointercancel", leave, { passive: true });
-    document.documentElement.addEventListener("pointerleave", leave, {
-      passive: true,
-    });
+    const detachInput = () => {
+      window.removeEventListener("pointermove", move, true);
+      window.removeEventListener("pointerdown", down, true);
+      window.removeEventListener("pointerup", up, true);
+      window.removeEventListener("pointercancel", leave);
+      document.documentElement.removeEventListener("pointerleave", leave);
+    };
+    configureInput.current = (active) => {
+      detachInput();
+      // Clear transient forces without rebuilding or resetting the ambient field.
+      synchronize();
+      if (active) {
+        window.addEventListener("pointermove", move, {
+          passive: true,
+          capture: true,
+        });
+        window.addEventListener("pointerdown", down, {
+          passive: true,
+          capture: true,
+        });
+        window.addEventListener("pointerup", up, {
+          passive: true,
+          capture: true,
+        });
+        window.addEventListener("pointercancel", leave, { passive: true });
+        document.documentElement.addEventListener("pointerleave", leave, {
+          passive: true,
+        });
+      }
+      paint();
+    };
     return () => {
       disposed = true;
       cancelAnimationFrame(raf);
@@ -612,11 +636,8 @@ export function SiteBackground() {
       document.removeEventListener("visibilitychange", synchronize);
       window.removeEventListener("resize", resize);
       window.removeEventListener("scroll", scroll);
-      window.removeEventListener("pointermove", move, true);
-      window.removeEventListener("pointerdown", down, true);
-      window.removeEventListener("pointerup", up, true);
-      window.removeEventListener("pointercancel", leave);
-      document.documentElement.removeEventListener("pointerleave", leave);
+      configureInput.current = null;
+      detachInput();
       field.replaceChildren();
       pulses.replaceChildren();
       links.replaceChildren();
@@ -627,12 +648,16 @@ export function SiteBackground() {
       response.removeAttribute("data-y");
     };
   }, [id, enabled]);
+  useEffect(() => {
+    if (enabled) configureInput.current?.(interactive);
+  }, [enabled, interactive]);
   return (
     <div
       className="site-background"
       ref={root}
       aria-hidden="true"
       data-enabled={enabled}
+      data-interactive={interactive}
       data-motion={enabled ? undefined : "off"}
       data-ready={enabled ? undefined : "false"}
     >

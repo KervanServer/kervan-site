@@ -6,24 +6,25 @@ export function OxogMark() {
   const ref = useRef<SVGSVGElement>(null);
   useEffect(() => {
     const symbol = ref.current;
-    if (
-      !symbol ||
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
-      !("IntersectionObserver" in window)
-    )
-      return;
-    symbol.dataset.motion = "waiting";
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (!entries.some((entry) => entry.isIntersecting)) return;
-        symbol.dataset.motion = "drawing";
-        observer.disconnect();
-      },
-      { rootMargin: "0px 0px -80px 0px" },
-    );
-    observer.observe(symbol);
+    if (!symbol || !("IntersectionObserver" in window)) return;
+    const motion = matchMedia("(prefers-reduced-motion: reduce)");
+    let visible = false;
+    const synchronize = () => {
+      symbol.dataset.motion =
+        visible && !document.hidden && !motion.matches ? "running" : "paused";
+    };
+    const observer = new IntersectionObserver((entries) => {
+      visible = entries.some((entry) => entry.isIntersecting);
+      synchronize();
+    });
+    observer.observe(symbol.closest(".studio-card") ?? symbol);
+    motion.addEventListener("change", synchronize);
+    document.addEventListener("visibilitychange", synchronize);
+    synchronize();
     return () => {
       observer.disconnect();
+      motion.removeEventListener("change", synchronize);
+      document.removeEventListener("visibilitychange", synchronize);
       delete symbol.dataset.motion;
     };
   }, []);
@@ -33,7 +34,7 @@ export function OxogMark() {
       viewBox="0 0 200 130"
       fill="none"
       aria-hidden="true"
-      className="studio-symbol"
+      className="studio-symbol oxog-mark"
     >
       <path
         d="M93 56 72 35C49 13 14 24 9 53 3 84 23 104 46 103"

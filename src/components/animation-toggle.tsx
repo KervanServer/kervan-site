@@ -9,7 +9,7 @@ import {
 
 export function AnimationToggle() {
   const enabled = useAnimationsEnabled();
-  const label = enabled ? "Animasyonları kapat" : "Animasyonları aç";
+  const label = enabled ? "Disable mouse effects" : "Enable mouse effects";
   const id = useId();
   const Icon = enabled ? Mouse : MouseOff;
   return (

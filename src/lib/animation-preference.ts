@@ -55,3 +55,12 @@ export function setAnimationsEnabled(enabled: boolean) {
 export function useAnimationsEnabled() {
   return useSyncExternalStore(subscribe, snapshot, () => false);
 }
+
+// Ambient motion follows the system independently of the mouse-effects choice.
+export function useAmbientMotionEnabled() {
+  return useSyncExternalStore(
+    subscribe,
+    () => !matchMedia("(prefers-reduced-motion: reduce)").matches,
+    () => false,
+  );
+}

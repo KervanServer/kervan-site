@@ -65,7 +65,50 @@ async function ready(page: Page) {
   await page.clock.runFor(300);
 }
 
-test("keyboard toggle cleans effects, removes scene handlers, persists, and restarts after navigation", async ({
+test("mouse-off keeps ambient geometry moving without responding to pointer input", async ({
+  page,
+}) => {
+  await ready(page);
+  const root = page.locator(".site-background");
+  const retainedCell = await root
+    .locator(".field-cell")
+    .first()
+    .elementHandle();
+  await page.mouse.click(1260, 180);
+  await page.clock.runFor(200);
+  await page.locator(".animation-toggle").click();
+  await expect(root).toBeVisible();
+  await expect(root).toHaveAttribute("data-motion", "running");
+  expect(await retainedCell?.evaluate((element) => element.isConnected)).toBe(
+    true,
+  );
+  const cells = root.locator(".field-cell");
+  const before = await cells.evaluateAll((elements) =>
+    elements.map((el) => el.getAttribute("transform")),
+  );
+  await page.mouse.move(600, 400);
+  await page.mouse.click(1260, 180);
+  await page.clock.runFor(2000);
+  expect(
+    await cells.evaluateAll((elements) =>
+      elements.map((el) => el.getAttribute("transform")),
+    ),
+  ).not.toEqual(before);
+  await expect(root.locator(".field-interaction")).toHaveAttribute(
+    "data-active",
+    "false",
+  );
+  await expect(
+    root.locator(
+      '.field-wave:not([display="none"]),.field-echo:not([display="none"])',
+    ),
+  ).toHaveCount(0);
+  await page.screenshot({
+    path: "test-results/visual/mouse-off-ambient-desktop.png",
+  });
+});
+
+test("keyboard toggle clears mouse effects while ambient motion persists across navigation", async ({
   page,
 }) => {
   await page.addInitScript(() => localStorage.setItem("kervan-theme", "dark"));
@@ -73,7 +116,7 @@ test("keyboard toggle cleans effects, removes scene handlers, persists, and rest
   const root = page.locator(".site-background");
   await expect(root).toHaveAttribute("data-motion", "running");
   const on = page.getByRole("button", {
-    name: "Animasyonları kapat",
+    name: "Disable mouse effects",
     exact: true,
   });
   await expect(on).toHaveAttribute("aria-pressed", "true");
@@ -92,31 +135,35 @@ test("keyboard toggle cleans effects, removes scene handlers, persists, and rest
     .evaluate((element) => getComputedStyle(element).animationName);
   await on.focus();
   await expect(
-    page.getByRole("tooltip", { name: "Animasyonları kapat" }),
+    page.getByRole("tooltip", { name: "Disable mouse effects" }),
   ).toBeVisible();
   await page.keyboard.press("Space");
   const off = page.getByRole("button", {
-    name: "Animasyonları aç",
+    name: "Enable mouse effects",
     exact: true,
   });
   await expect(off).toHaveAttribute("aria-pressed", "false");
-  await expect(root).toHaveAttribute("data-motion", "off");
-  await expect(root).toBeHidden();
-  await expect(
-    root.locator(".field-cell,.field-wave,.field-echo,.field-mote"),
-  ).toHaveCount(0);
+  await expect(root).toHaveAttribute("data-motion", "running");
+  await expect(root).toBeVisible();
+  await expect(root).toHaveAttribute("data-interactive", "false");
+  await expect(root.locator(".field-response")).toBeHidden();
   await expect
     .poll(() => page.evaluate(() => window.animationProbe.listeners))
     .toEqual(
       Object.fromEntries(
-        Object.entries(active).map(([name, count]) => [name, count - 1]),
+        Object.entries(active).map(([name, count]) => [
+          name,
+          count - (name.startsWith("pointer") ? 1 : 0),
+        ]),
       ),
     );
   const writes = await page.evaluate(() => window.animationProbe.writes);
   await page.mouse.move(600, 400);
   await page.mouse.click(1260, 180);
   await page.clock.runFor(4000);
-  expect(await page.evaluate(() => window.animationProbe.writes)).toBe(writes);
+  expect(
+    await page.evaluate(() => window.animationProbe.writes),
+  ).toBeGreaterThan(writes);
   await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
   await expect(page.locator(".art-packets")).toHaveCSS(
     "animation-name",
@@ -127,7 +174,7 @@ test("keyboard toggle cleans effects, removes scene handlers, persists, and rest
   ).toBe("off");
   await page.reload();
   await expect(off).toHaveAttribute("aria-pressed", "false");
-  await expect(root).toHaveAttribute("data-motion", "off");
+  await expect(root).toHaveAttribute("data-motion", "running");
   await page.getByRole("link", { name: "Quick start", exact: true }).click();
   await expect(page).toHaveURL(/\/docs\/getting-started\/$/);
   await expect(off).toHaveAttribute("aria-pressed", "false");
@@ -150,7 +197,7 @@ test("first-use reduced motion follows the system until an explicit choice is ma
   const root = page.locator(".site-background");
   await expect(root).toHaveAttribute("data-motion", "off");
   await expect(
-    page.getByRole("button", { name: "Animasyonları aç", exact: true }),
+    page.getByRole("button", { name: "Enable mouse effects", exact: true }),
   ).toHaveAttribute("aria-pressed", "false");
   expect(
     await page.evaluate(() => localStorage.getItem("kervan-animations")),
@@ -158,14 +205,16 @@ test("first-use reduced motion follows the system until an explicit choice is ma
   await page.emulateMedia({ reducedMotion: "no-preference" });
   await expect(root).toHaveAttribute("data-motion", "running");
   await page
-    .getByRole("button", { name: "Animasyonları kapat", exact: true })
+    .getByRole("button", { name: "Disable mouse effects", exact: true })
     .click();
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.emulateMedia({ reducedMotion: "no-preference" });
-  await expect(root).toHaveAttribute("data-motion", "off");
+  await expect(root).toHaveAttribute("data-motion", "running");
+  await expect(root).toHaveAttribute("data-interactive", "false");
   await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(root).toHaveAttribute("data-motion", "off");
   await page
-    .getByRole("button", { name: "Animasyonları aç", exact: true })
+    .getByRole("button", { name: "Enable mouse effects", exact: true })
     .click();
   await expect(root).toHaveAttribute("data-motion", "running");
   await page.reload();
@@ -191,14 +240,14 @@ test("blocked storage keeps the control functional without runtime errors", asyn
   );
   await ready(page);
   await page
-    .getByRole("button", { name: "Animasyonları kapat", exact: true })
+    .getByRole("button", { name: "Disable mouse effects", exact: true })
     .click();
   await expect(page.locator(".site-background")).toHaveAttribute(
-    "data-motion",
-    "off",
+    "data-interactive",
+    "false",
   );
   await page
-    .getByRole("button", { name: "Animasyonları aç", exact: true })
+    .getByRole("button", { name: "Enable mouse effects", exact: true })
     .click();
   await expect(page.locator(".site-background")).toHaveAttribute(
     "data-motion",
@@ -219,14 +268,18 @@ test("animation preferences synchronize between tabs and clearing the key restor
     "true",
   );
   await page
-    .getByRole("button", { name: "Animasyonları kapat", exact: true })
+    .getByRole("button", { name: "Disable mouse effects", exact: true })
     .click();
   await expect(other.locator(".site-background")).toHaveAttribute(
+    "data-interactive",
+    "false",
+  );
+  await expect(other.locator(".site-background")).toHaveAttribute(
     "data-motion",
-    "off",
+    "running",
   );
   await other
-    .getByRole("button", { name: "Animasyonları aç", exact: true })
+    .getByRole("button", { name: "Enable mouse effects", exact: true })
     .click();
   await expect(page.locator(".site-background")).toHaveAttribute(
     "data-motion",
@@ -261,6 +314,13 @@ test.describe("touch control", () => {
     expect(box?.height).toBeGreaterThanOrEqual(44);
     await control.tap();
     await expect(control).toHaveAttribute("aria-pressed", "false");
+    await expect(page.locator(".site-background")).toHaveAttribute(
+      "data-motion",
+      "running",
+    );
+    await page.screenshot({
+      path: "test-results/visual/mouse-off-ambient-mobile.png",
+    });
     await control.tap();
     await expect(control).toHaveAttribute("aria-pressed", "true");
     for (const width of [320, 375, 768]) {

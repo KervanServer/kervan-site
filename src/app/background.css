@@ -20,8 +20,10 @@
 .site-background[data-ready="true"] {
   opacity: 1;
 }
-.site-background[data-enabled="false"],
-:root[data-background-animations="off"] .site-background {
+.site-background[data-enabled="false"] {
+  display: none;
+}
+.site-background[data-interactive="false"] .field-response {
   display: none;
 }
 .site-background > svg {
